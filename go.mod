@@ -3,9 +3,12 @@ module stash.appscode.dev/ui-server
 go 1.17
 
 require (
+	github.com/lnquy/cron v1.1.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.1.3
 	go.bytebuilders.dev/license-verifier v0.9.4
 	gomodules.xyz/logs v0.0.6
+	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/x v0.0.8
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
@@ -16,7 +19,7 @@ require (
 	kmodules.xyz/client-go v0.0.0-20211223200000-0c37b46c4f50
 	kmodules.xyz/resource-metrics v0.0.6
 	sigs.k8s.io/controller-runtime v0.9.0
-	stash.appscode.dev/apimachinery v0.17.1-0.20211224083325-1f02bd7350aa
+	stash.appscode.dev/apimachinery v0.17.1-0.20220104115423-bc75d16a1d6c
 )
 
 require (
@@ -105,7 +108,6 @@ require (
 	gomodules.xyz/encoding v0.0.2 // indirect
 	gomodules.xyz/flags v0.1.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
-	gomodules.xyz/pointer v0.1.0 // indirect
 	gomodules.xyz/sets v0.2.0 // indirect
 	gomodules.xyz/wait v0.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
