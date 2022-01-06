@@ -30,6 +30,7 @@ import (
 	"github.com/lnquy/cron"
 	rcron "github.com/robfig/cron/v3"
 	"gomodules.xyz/pointer"
+	core "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,6 +38,8 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	appcatalog "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
+	kubedbapi "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -49,7 +52,9 @@ type BackupOverviewStorage struct {
 
 var _ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
 var _ rest.Scoper = &BackupOverviewStorage{}
-var _ rest.Getter = &BackupOverviewStorage{}
+
+//var _ rest.Getter = &BackupOverviewStorage{}
+var _ rest.Creater = &BackupOverviewStorage{}
 
 //var _ rest.Lister = &BackupOverviewStorage{}
 var _ rest.Storage = &BackupOverviewStorage{}
@@ -81,7 +86,9 @@ func (r *BackupOverviewStorage) New() runtime.Object {
 	return &uiapi.BackupOverview{}
 }
 
-func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
+func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	in := obj.(*uiapi.BackupOverview)
+
 	ns, ok := apirequest.NamespaceFrom(ctx)
 	if !ok {
 		return nil, apierrors.NewBadRequest("missing namespace")
@@ -94,37 +101,62 @@ func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *meta
 
 	attrs := authorizer.AttributesRecord{
 		User:      user,
-		Verb:      "get",
+		Verb:      "create",
 		Namespace: ns,
 		APIGroup:  r.gr.Group,
 		Resource:  r.gr.Resource,
-		Name:      name,
+		Name:      in.Name,
 	}
 	decision, why, err := r.a.Authorize(ctx, attrs)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
 	if decision != authorizer.DecisionAllow {
-		return nil, apierrors.NewForbidden(r.gr, name, errors.New(why))
+		return nil, apierrors.NewForbidden(r.gr, in.Name, errors.New(why))
 	}
-
-	cfgList := &stashv1beta1.BackupConfigurationList{}
-	if err := r.kc.List(ctx, cfgList); err != nil {
-		return nil, err
+	gvr := schema.GroupVersionResource{
+		Group:    in.Request.Group,
+		Version:  in.Request.Version,
+		Resource: in.Request.Resource,
 	}
-
+	dbObj := getDBObj(gvr)
 	backupConfig := stashv1beta1.BackupConfiguration{}
-	for _, c := range cfgList.Items {
-		if c.Spec.Target != nil && c.Spec.Target.Ref.Name == name {
-			backupConfig = c
-			break
+
+	if gvr.Resource == kubedbapi.ResourcePluralMongoDB {
+		db, ok := dbObj.(*kubedbapi.MongoDB)
+		if !ok {
+			return nil, errors.New("invalid object type")
+		}
+		if err := r.kc.Get(ctx, client.ObjectKey{Name: in.Name, Namespace: in.Namespace}, db); err != nil {
+			return nil, err
+		}
+
+		abList := &appcatalog.AppBindingList{}
+		opts := &client.ListOptions{Namespace: core.NamespaceAll}
+		selector := client.MatchingLabels(db.OffshootSelectors())
+		selector.ApplyToList(opts)
+		if err := r.kc.List(ctx, abList, opts); err != nil {
+			return nil, err
+		}
+		if len(abList.Items) != 1 {
+			return nil, fmt.Errorf("expect one AppBinding but got %v for Database Type %s with key %s/%s", len(abList.Items), db.Kind, db.Namespace, db.Name)
+		}
+		ab := abList.Items[0]
+
+		cfgList := &stashv1beta1.BackupConfigurationList{}
+		if err := r.kc.List(ctx, cfgList, client.InNamespace(ab.Namespace)); err != nil {
+			return nil, err
+		}
+		for _, cfg := range cfgList.Items {
+			if cfg.Spec.Target != nil && cfg.Spec.Target.Ref.Name == ab.Name {
+				backupConfig = cfg
+				break
+			}
+		}
+		if backupConfig.Spec.Target == nil {
+			return nil, apierrors.NewInternalError(fmt.Errorf("no BackupConfiguration is found for the Database %v/%v", ns, db.Name))
 		}
 	}
-
-	if backupConfig.Spec.Target == nil {
-		return nil, apierrors.NewInternalError(fmt.Errorf("no BackupConfiguration is found for the Database %v/%v", ns, name))
-	}
-	fmt.Println(backupConfig)
 
 	repo := &stashv1alpha1.Repository{}
 	repoKey := client.ObjectKey{Name: backupConfig.Spec.Repository.Name, Namespace: backupConfig.Spec.Repository.Namespace}
@@ -146,23 +178,110 @@ func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *meta
 		return nil, err
 	}
 
-	return &uiapi.BackupOverview{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
-		},
-		Spec: uiapi.BackupOverviewSpec{
-			Schedule:           fmt.Sprintf("%s(%s)", backupConfig.Spec.Schedule, desc),
-			LastBackupTime:     repo.Status.LastBackupTime,
-			UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
-			BackupStorage:      repo.Name,
-			DataSize:           repo.Status.TotalSize,
-			NumberOfSnapshots:  repo.Status.SnapshotCount,
-			DataIntegrity:      pointer.Bool(repo.Status.Integrity),
-			DataDirectory:      "unknown",
-		},
-	}, nil
+	in.Response = uiapi.BackupOverviewResponse{
+		Schedule:           fmt.Sprintf("%s(%s)", backupConfig.Spec.Schedule, desc),
+		LastBackupTime:     repo.Status.LastBackupTime,
+		UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
+		BackupStorage:      repo.Name,
+		DataSize:           repo.Status.TotalSize,
+		NumberOfSnapshots:  repo.Status.SnapshotCount,
+		DataIntegrity:      pointer.Bool(repo.Status.Integrity),
+		DataDirectory:      "unknown",
+	}
+	return in, nil
 }
+
+func getDBObj(gvr schema.GroupVersionResource) interface{} {
+	switch gvr.Resource {
+	case kubedbapi.ResourcePluralMongoDB:
+		return &kubedbapi.MongoDB{}
+	default:
+		return nil
+	}
+}
+
+//func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
+//	ns, ok := apirequest.NamespaceFrom(ctx)
+//	if !ok {
+//		return nil, apierrors.NewBadRequest("missing namespace")
+//	}
+//
+//	user, ok := apirequest.UserFrom(ctx)
+//	if !ok {
+//		return nil, apierrors.NewBadRequest("missing user info")
+//	}
+//
+//	attrs := authorizer.AttributesRecord{
+//		User:      user,
+//		Verb:      "get",
+//		Namespace: ns,
+//		APIGroup:  r.gr.Group,
+//		Resource:  r.gr.Resource,
+//		Name:      name,
+//	}
+//	decision, why, err := r.a.Authorize(ctx, attrs)
+//	if err != nil {
+//		return nil, apierrors.NewInternalError(err)
+//	}
+//	if decision != authorizer.DecisionAllow {
+//		return nil, apierrors.NewForbidden(r.gr, name, errors.New(why))
+//	}
+//
+//	cfgList := &stashv1beta1.BackupConfigurationList{}
+//	if err := r.kc.List(ctx, cfgList); err != nil {
+//		return nil, err
+//	}
+//
+//	backupConfig := stashv1beta1.BackupConfiguration{}
+//	for _, c := range cfgList.Items {
+//		if c.Spec.Target != nil && c.Spec.Target.Ref.Name == name {
+//			backupConfig = c
+//			break
+//		}
+//	}
+//
+//	if backupConfig.Spec.Target == nil {
+//		return nil, apierrors.NewInternalError(fmt.Errorf("no BackupConfiguration is found for the Database %v/%v", ns, name))
+//	}
+//	fmt.Println(backupConfig)
+//
+//	repo := &stashv1alpha1.Repository{}
+//	repoKey := client.ObjectKey{Name: backupConfig.Spec.Repository.Name, Namespace: backupConfig.Spec.Repository.Namespace}
+//	if repoKey.Namespace == "" {
+//		repoKey.Namespace = backupConfig.Namespace
+//	}
+//	if err := r.kc.Get(ctx, repoKey, repo); err != nil {
+//		return nil, err
+//	}
+//
+//	exprDesc, _ := cron.NewDescriptor()
+//	desc, err := exprDesc.ToDescription(backupConfig.Spec.Schedule, cron.Locale_en)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	sched, err := rcron.NewParser(rcron.Minute | rcron.Hour | rcron.Dom | rcron.Month | rcron.Dow).Parse(backupConfig.Spec.Schedule)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &uiapi.BackupOverview{
+//		ObjectMeta: metav1.ObjectMeta{
+//			Name:      name,
+//			Namespace: ns,
+//		},
+//		Spec: uiapi.BackupOverviewSpec{
+//			Schedule:           fmt.Sprintf("%s(%s)", backupConfig.Spec.Schedule, desc),
+//			LastBackupTime:     repo.Status.LastBackupTime,
+//			UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
+//			BackupStorage:      repo.Name,
+//			DataSize:           repo.Status.TotalSize,
+//			NumberOfSnapshots:  repo.Status.SnapshotCount,
+//			DataIntegrity:      pointer.Bool(repo.Status.Integrity),
+//			DataDirectory:      "unknown",
+//		},
+//	}, nil
+//}
 
 //func (r *BackupOverviewStorage) NewList() runtime.Object {
 //	return &uiapi.BackupOverviewList{}
