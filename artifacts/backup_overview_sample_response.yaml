@@ -1,0 +1,18 @@
+apiVersion: ui.stash.appscode.com/v1alpha1
+kind: BackupOverview
+metadata:
+  name: mg-sh
+  namespace: demo
+request:
+  group: kubedb.com
+  resource: mongodbs
+  version: v1alpha2
+response:
+  dataIntegrity: true
+  dataSize: 133.190 KiB
+  lastBackupTime: "2022-01-05T12:15:06Z"
+  numberOfSnapshots: 20
+  repository: gcs-repo
+  schedule: '*/5 * * * *(Every 5 minutes)'
+  status: Paused
+  upcomingBackupTime: "2022-01-06T11:55:00Z"

@@ -147,6 +147,11 @@ func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, 
 		NumberOfSnapshots:  repo.Status.SnapshotCount,
 		DataIntegrity:      pointer.Bool(repo.Status.Integrity),
 	}
+	if backupConfig.Spec.Paused {
+		in.Response.Status = uiapi.BackupStatusPaused
+	} else {
+		in.Response.Status = uiapi.BackupStatusActive
+	}
 	return in, nil
 }
 

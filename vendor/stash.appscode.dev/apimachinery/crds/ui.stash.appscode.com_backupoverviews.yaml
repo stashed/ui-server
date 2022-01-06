@@ -61,6 +61,8 @@ spec:
                 type: string
               schedule:
                 type: string
+              status:
+                type: string
               upcomingBackupTime:
                 format: date-time
                 type: string

@@ -33,15 +33,23 @@ type BackupOverviewRequest struct {
 	Resource string `json:"resource" protobuf:"resource,3,opt,name=resource"`
 }
 
+type BackupStatus string
+
+const (
+	BackupStatusActive = "Active"
+	BackupStatusPaused = "Paused"
+)
+
 // BackupOverviewResponse defines the response fields of BackupOverview
 type BackupOverviewResponse struct {
 	Schedule           string       `json:"schedule,omitempty" protobuf:"bytes,1,opt,name=schedule"`
-	LastBackupTime     *metav1.Time `json:"lastBackupTime,omitempty" protobuf:"bytes,2,opt,name=lastBackupTime"`
-	UpcomingBackupTime *metav1.Time `json:"upcomingBackupTime,omitempty" protobuf:"bytes,3,opt,name=upcomingBackupTime"`
-	Repository         string       `json:"repository,omitempty" protobuf:"bytes,4,opt,name=repository"`
-	DataSize           string       `json:"dataSize,omitempty" protobuf:"bytes,5,opt,name=dataSize"`
-	NumberOfSnapshots  int64        `json:"numberOfSnapshots,omitempty" protobuf:"bytes,6,opt,name=numberOfSnapshots"`
-	DataIntegrity      bool         `json:"dataIntegrity,omitempty" protobuf:"bytes,7,opt,name=dataIntegrity"`
+	Status             BackupStatus `json:"status,omitempty" protobuf:"bytes,2,opt,name=status"`
+	LastBackupTime     *metav1.Time `json:"lastBackupTime,omitempty" protobuf:"bytes,3,opt,name=lastBackupTime"`
+	UpcomingBackupTime *metav1.Time `json:"upcomingBackupTime,omitempty" protobuf:"bytes,4,opt,name=upcomingBackupTime"`
+	Repository         string       `json:"repository,omitempty" protobuf:"bytes,5,opt,name=repository"`
+	DataSize           string       `json:"dataSize,omitempty" protobuf:"bytes,6,opt,name=dataSize"`
+	NumberOfSnapshots  int64        `json:"numberOfSnapshots,omitempty" protobuf:"bytes,7,opt,name=numberOfSnapshots"`
+	DataIntegrity      bool         `json:"dataIntegrity,omitempty" protobuf:"bytes,8,opt,name=dataIntegrity"`
 }
 
 // BackupOverview is the Schema for the BackupOverviews API

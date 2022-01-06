@@ -21,7 +21,7 @@ require (
 	kmodules.xyz/resource-metrics v0.0.6
 	kubedb.dev/apimachinery v0.24.0
 	sigs.k8s.io/controller-runtime v0.9.0
-	stash.appscode.dev/apimachinery v0.17.1-0.20220106111730-725e9f25d935
+	stash.appscode.dev/apimachinery v0.17.1-0.20220106115108-708722ac4694
 )
 
 require (

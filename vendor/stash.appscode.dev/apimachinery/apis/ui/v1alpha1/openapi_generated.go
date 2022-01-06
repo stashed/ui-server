@@ -19167,6 +19167,12 @@ func schema_apimachinery_apis_ui_v1alpha1_BackupOverviewResponse(ref common.Refe
 							Format: "",
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"lastBackupTime": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
