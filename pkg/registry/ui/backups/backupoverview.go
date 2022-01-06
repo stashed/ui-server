@@ -119,52 +119,17 @@ func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, 
 		Version:  in.Request.Version,
 		Resource: in.Request.Resource,
 	}
-	dbObj := getDBObj(gvr)
-	backupConfig := stashv1beta1.BackupConfiguration{}
-
-	if gvr.Resource == kubedbapi.ResourcePluralMongoDB {
-		db, ok := dbObj.(*kubedbapi.MongoDB)
-		if !ok {
-			return nil, errors.New("invalid object type")
-		}
-		if err := r.kc.Get(ctx, client.ObjectKey{Name: in.Name, Namespace: in.Namespace}, db); err != nil {
-			return nil, err
-		}
-
-		abList := &appcatalog.AppBindingList{}
-		opts := &client.ListOptions{Namespace: core.NamespaceAll}
-		selector := client.MatchingLabels(db.OffshootSelectors())
-		selector.ApplyToList(opts)
-		if err := r.kc.List(ctx, abList, opts); err != nil {
-			return nil, err
-		}
-		if len(abList.Items) != 1 {
-			return nil, fmt.Errorf("expect one AppBinding but got %v for Database Type %s with key %s/%s", len(abList.Items), db.Kind, db.Namespace, db.Name)
-		}
-		ab := abList.Items[0]
-
-		cfgList := &stashv1beta1.BackupConfigurationList{}
-		if err := r.kc.List(ctx, cfgList, client.InNamespace(ab.Namespace)); err != nil {
-			return nil, err
-		}
-		for _, cfg := range cfgList.Items {
-			if cfg.Spec.Target != nil && cfg.Spec.Target.Ref.Name == ab.Name {
-				backupConfig = cfg
-				break
-			}
-		}
-		if backupConfig.Spec.Target == nil {
-			return nil, apierrors.NewInternalError(fmt.Errorf("no BackupConfiguration is found for the Database %v/%v", ns, db.Name))
-		}
+	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: in.Name, Namespace: in.Namespace})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get AppBinding, reason: %v", err)
 	}
-
-	repo := &stashv1alpha1.Repository{}
-	repoKey := client.ObjectKey{Name: backupConfig.Spec.Repository.Name, Namespace: backupConfig.Spec.Repository.Namespace}
-	if repoKey.Namespace == "" {
-		repoKey.Namespace = backupConfig.Namespace
+	backupConfig, err := getBackupConfig(ctx, r.kc, ab)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get BackupConfiguration, reason: %v", err)
 	}
-	if err := r.kc.Get(ctx, repoKey, repo); err != nil {
-		return nil, err
+	repo, err := getRepository(ctx, r.kc, backupConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Repository, reason: %v", err)
 	}
 
 	exprDesc, _ := cron.NewDescriptor()
@@ -191,171 +156,94 @@ func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, 
 	return in, nil
 }
 
-func getDBObj(gvr schema.GroupVersionResource) interface{} {
+func getAppBinding(ctx context.Context, kc client.Client, gvr schema.GroupVersionResource, key client.ObjectKey) (*appcatalog.AppBinding, error) {
+	labels, err := getOffshootLabels(ctx, kc, gvr, key)
+	if err != nil {
+		return nil, err
+	}
+
+	abList := &appcatalog.AppBindingList{}
+	opts := &client.ListOptions{Namespace: core.NamespaceAll}
+	selector := client.MatchingLabels(labels)
+	selector.ApplyToList(opts)
+	if err := kc.List(ctx, abList, opts); err != nil {
+		return nil, err
+	}
+
+	if len(abList.Items) != 1 {
+		return nil, fmt.Errorf("expect one AppBinding but got %v", len(abList.Items))
+	}
+	return &abList.Items[0], nil
+}
+
+func getBackupConfig(ctx context.Context, kc client.Client, ab *appcatalog.AppBinding) (*stashv1beta1.BackupConfiguration, error) {
+	cfgList := &stashv1beta1.BackupConfigurationList{}
+	if err := kc.List(ctx, cfgList, client.InNamespace(ab.Namespace)); err != nil {
+		return nil, err
+	}
+	for _, cfg := range cfgList.Items {
+		if cfg.Spec.Target != nil && cfg.Spec.Target.Ref.Name == ab.Name {
+			return &cfg, nil
+		}
+	}
+	return nil, errors.New("no BackupConfiguration is found for the given Database")
+}
+
+func getOffshootLabels(ctx context.Context, kc client.Client, gvr schema.GroupVersionResource, key client.ObjectKey) (map[string]string, error) {
 	switch gvr.Resource {
 	case kubedbapi.ResourcePluralMongoDB:
-		return &kubedbapi.MongoDB{}
+		db := &kubedbapi.MongoDB{}
+		if err := kc.Get(ctx, key, db); err != nil {
+			return nil, err
+		}
+		return db.OffshootSelectors(), nil
+	case kubedbapi.ResourcePluralElasticsearch:
+		db := &kubedbapi.Elasticsearch{}
+		if err := kc.Get(ctx, key, db); err != nil {
+			return nil, err
+		}
+		return db.OffshootSelectors(), nil
+	case kubedbapi.ResourcePluralPostgres:
+		db := &kubedbapi.Postgres{}
+		if err := kc.Get(ctx, key, db); err != nil {
+			return nil, err
+		}
+		return db.OffshootSelectors(), nil
+	case kubedbapi.ResourcePluralMySQL:
+		db := &kubedbapi.MySQL{}
+		if err := kc.Get(ctx, key, db); err != nil {
+			return nil, err
+		}
+		return db.OffshootSelectors(), nil
+	case kubedbapi.ResourcePluralMariaDB:
+		db := &kubedbapi.MariaDB{}
+		if err := kc.Get(ctx, key, db); err != nil {
+			return nil, err
+		}
+		return db.OffshootSelectors(), nil
+	case kubedbapi.ResourcePluralRedis:
+		db := &kubedbapi.Redis{}
+		if err := kc.Get(ctx, key, db); err != nil {
+			return nil, err
+		}
+		return db.OffshootSelectors(), nil
 	default:
-		return nil
+		return nil, fmt.Errorf("database type with GVR %v is not supported", gvr.String())
 	}
 }
 
-//func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
-//	ns, ok := apirequest.NamespaceFrom(ctx)
-//	if !ok {
-//		return nil, apierrors.NewBadRequest("missing namespace")
-//	}
-//
-//	user, ok := apirequest.UserFrom(ctx)
-//	if !ok {
-//		return nil, apierrors.NewBadRequest("missing user info")
-//	}
-//
-//	attrs := authorizer.AttributesRecord{
-//		User:      user,
-//		Verb:      "get",
-//		Namespace: ns,
-//		APIGroup:  r.gr.Group,
-//		Resource:  r.gr.Resource,
-//		Name:      name,
-//	}
-//	decision, why, err := r.a.Authorize(ctx, attrs)
-//	if err != nil {
-//		return nil, apierrors.NewInternalError(err)
-//	}
-//	if decision != authorizer.DecisionAllow {
-//		return nil, apierrors.NewForbidden(r.gr, name, errors.New(why))
-//	}
-//
-//	cfgList := &stashv1beta1.BackupConfigurationList{}
-//	if err := r.kc.List(ctx, cfgList); err != nil {
-//		return nil, err
-//	}
-//
-//	backupConfig := stashv1beta1.BackupConfiguration{}
-//	for _, c := range cfgList.Items {
-//		if c.Spec.Target != nil && c.Spec.Target.Ref.Name == name {
-//			backupConfig = c
-//			break
-//		}
-//	}
-//
-//	if backupConfig.Spec.Target == nil {
-//		return nil, apierrors.NewInternalError(fmt.Errorf("no BackupConfiguration is found for the Database %v/%v", ns, name))
-//	}
-//	fmt.Println(backupConfig)
-//
-//	repo := &stashv1alpha1.Repository{}
-//	repoKey := client.ObjectKey{Name: backupConfig.Spec.Repository.Name, Namespace: backupConfig.Spec.Repository.Namespace}
-//	if repoKey.Namespace == "" {
-//		repoKey.Namespace = backupConfig.Namespace
-//	}
-//	if err := r.kc.Get(ctx, repoKey, repo); err != nil {
-//		return nil, err
-//	}
-//
-//	exprDesc, _ := cron.NewDescriptor()
-//	desc, err := exprDesc.ToDescription(backupConfig.Spec.Schedule, cron.Locale_en)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	sched, err := rcron.NewParser(rcron.Minute | rcron.Hour | rcron.Dom | rcron.Month | rcron.Dow).Parse(backupConfig.Spec.Schedule)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return &uiapi.BackupOverview{
-//		ObjectMeta: metav1.ObjectMeta{
-//			Name:      name,
-//			Namespace: ns,
-//		},
-//		Spec: uiapi.BackupOverviewSpec{
-//			Schedule:           fmt.Sprintf("%s(%s)", backupConfig.Spec.Schedule, desc),
-//			LastBackupTime:     repo.Status.LastBackupTime,
-//			UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
-//			BackupStorage:      repo.Name,
-//			DataSize:           repo.Status.TotalSize,
-//			NumberOfSnapshots:  repo.Status.SnapshotCount,
-//			DataIntegrity:      pointer.Bool(repo.Status.Integrity),
-//			DataDirectory:      "unknown",
-//		},
-//	}, nil
-//}
+func getRepository(ctx context.Context, kc client.Client, backupConfig *stashv1beta1.BackupConfiguration) (*stashv1alpha1.Repository, error) {
+	repoKey := client.ObjectKey{Name: backupConfig.Spec.Repository.Name, Namespace: backupConfig.Spec.Repository.Namespace}
+	if repoKey.Namespace == "" {
+		repoKey.Namespace = backupConfig.Namespace
+	}
 
-//func (r *BackupOverviewStorage) NewList() runtime.Object {
-//	return &uiapi.BackupOverviewList{}
-//}
-
-//func (r *BackupOverviewStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-//	ns, ok := apirequest.NamespaceFrom(ctx)
-//	if !ok {
-//		return nil, apierrors.NewBadRequest("missing namespace")
-//	}
-//
-//	user, ok := apirequest.UserFrom(ctx)
-//	if !ok {
-//		return nil, apierrors.NewBadRequest("missing user info")
-//	}
-//
-//	attrs := authorizer.AttributesRecord{
-//		User:      user,
-//		Verb:      "get",
-//		Namespace: ns,
-//		APIGroup:  r.gr.Group,
-//		Resource:  r.gr.Resource,
-//		Name:      "",
-//	}
-//
-//	decision, why, err := r.a.Authorize(ctx, attrs)
-//	if err != nil {
-//		return nil, apierrors.NewInternalError(err)
-//	}
-//	if decision != authorizer.DecisionAllow {
-//		return nil, apierrors.NewForbidden(r.gr, "", errors.New(why))
-//	}
-//
-//	opts := client.ListOptions{Namespace: ns}
-//	if options != nil {
-//		if options.LabelSelector != nil && !options.LabelSelector.Empty() {
-//			opts.LabelSelector = options.LabelSelector
-//		}
-//		if options.FieldSelector != nil && !options.FieldSelector.Empty() {
-//			opts.FieldSelector = options.FieldSelector
-//		}
-//		opts.Limit = options.Limit
-//		opts.Continue = options.Continue
-//	}
-//
-//	//todo: Implement list logic
-//
-//	boList := make([]uiapi.BackupOverview, 0)
-//	bo := uiapi.BackupOverview{
-//		ObjectMeta: metav1.ObjectMeta{
-//			Name:      "mg-sh",
-//			Namespace: ns,
-//		},
-//		Spec: uiapi.BackupOverviewSpec{
-//			Schedule:           "Every 30 min",
-//			LastBackupTime:     &metav1.Time{Time: time.Now()},
-//			UpcomingBackupTime: &metav1.Time{Time: time.Now()},
-//			BackupStorage:      "GCS-Bucket",
-//			DataSize:           "10Gi",
-//			NumberOfSnapshots:  100,
-//			DataIntegrity:      true,
-//			DataDirectory:      "/data/db",
-//		},
-//	}
-//	boList = append(boList, bo)
-//
-//	res := uiapi.BackupOverviewList{
-//		TypeMeta: metav1.TypeMeta{},
-//		ListMeta: metav1.ListMeta{},
-//		Items:    boList,
-//	}
-//	res.ListMeta.SelfLink = ""
-//	return &res, nil
-//}
+	repo := &stashv1alpha1.Repository{}
+	if err := kc.Get(ctx, repoKey, repo); err != nil {
+		return nil, err
+	}
+	return repo, nil
+}
 
 func (r *BackupOverviewStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return r.convertor.ConvertToTable(ctx, object, tableOptions)
