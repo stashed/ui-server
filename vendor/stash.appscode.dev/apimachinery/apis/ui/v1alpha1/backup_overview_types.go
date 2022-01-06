@@ -38,11 +38,10 @@ type BackupOverviewResponse struct {
 	Schedule           string       `json:"schedule,omitempty" protobuf:"bytes,1,opt,name=schedule"`
 	LastBackupTime     *metav1.Time `json:"lastBackupTime,omitempty" protobuf:"bytes,2,opt,name=lastBackupTime"`
 	UpcomingBackupTime *metav1.Time `json:"upcomingBackupTime,omitempty" protobuf:"bytes,3,opt,name=upcomingBackupTime"`
-	BackupStorage      string       `json:"backupStorage,omitempty" protobuf:"bytes,4,opt,name=backupStorage"`
+	Repository         string       `json:"repository,omitempty" protobuf:"bytes,4,opt,name=repository"`
 	DataSize           string       `json:"dataSize,omitempty" protobuf:"bytes,5,opt,name=dataSize"`
 	NumberOfSnapshots  int64        `json:"numberOfSnapshots,omitempty" protobuf:"bytes,6,opt,name=numberOfSnapshots"`
 	DataIntegrity      bool         `json:"dataIntegrity,omitempty" protobuf:"bytes,7,opt,name=dataIntegrity"`
-	DataDirectory      string       `json:"dataDirectory,omitempty" protobuf:"bytes,8,opt,name=dataDirectory"`
 }
 
 // BackupOverview is the Schema for the BackupOverviews API

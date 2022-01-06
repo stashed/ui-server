@@ -19177,7 +19177,7 @@ func schema_apimachinery_apis_ui_v1alpha1_BackupOverviewResponse(ref common.Refe
 							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
-					"backupStorage": {
+					"repository": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -19198,12 +19198,6 @@ func schema_apimachinery_apis_ui_v1alpha1_BackupOverviewResponse(ref common.Refe
 					"dataIntegrity": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"dataDirectory": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
 							Format: "",
 						},
 					},

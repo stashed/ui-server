@@ -47,10 +47,6 @@ spec:
           response:
             description: BackupOverviewResponse defines the response fields of BackupOverview
             properties:
-              backupStorage:
-                type: string
-              dataDirectory:
-                type: string
               dataIntegrity:
                 type: boolean
               dataSize:
@@ -61,6 +57,8 @@ spec:
               numberOfSnapshots:
                 format: int64
                 type: integer
+              repository:
+                type: string
               schedule:
                 type: string
               upcomingBackupTime:

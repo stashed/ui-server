@@ -1264,5 +1264,5 @@ software.sslmate.com/src/go-pkcs12 v0.0.0-20180114231543-2291e8f0f237/go.mod h1:
 software.sslmate.com/src/go-pkcs12 v0.0.0-20200830195227-52f69702a001/go.mod h1:/xvNRWUqm0+/ZMiF4EX00vrSCMsE4/NHb+Pt3freEeQ=
 sourcegraph.com/sourcegraph/appdash v0.0.0-20190731080439-ebfcffb1b5c0/go.mod h1:hI742Nqp5OhwiqlzhgfbWU4mW4yO10fP+LoT9WOswdU=
 stash.appscode.dev/apimachinery v0.16.0/go.mod h1:unpV/YyHVECNrAdFjFg/SetmPeUjfvc2+P8cnGjih/U=
-stash.appscode.dev/apimachinery v0.17.1-0.20220105130028-c724df5d2c06 h1:2HwdJ/zn2jEPWq5U39H/oOHSzhmM2SarisWMZQ6Y05I=
-stash.appscode.dev/apimachinery v0.17.1-0.20220105130028-c724df5d2c06/go.mod h1:dZoPpOgM478PtmkXzI3qRsCccxJag7N/27UxwZ8bozk=
+stash.appscode.dev/apimachinery v0.17.1-0.20220106111730-725e9f25d935 h1:uo9ki618drfSHOcIYBwkujxMZYYJFxvj73cUYX2UcmM=
+stash.appscode.dev/apimachinery v0.17.1-0.20220106111730-725e9f25d935/go.mod h1:dZoPpOgM478PtmkXzI3qRsCccxJag7N/27UxwZ8bozk=
