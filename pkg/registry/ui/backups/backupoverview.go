@@ -19,13 +19,16 @@ package backups
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"stash.appscode.dev/apimachinery/apis/ui"
-	uiv1alpha1 "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
+	uiapi "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
 
+	"github.com/lnquy/cron"
+	rcron "github.com/robfig/cron/v3"
+	"gomodules.xyz/pointer"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,8 +47,11 @@ type BackupOverviewStorage struct {
 
 var _ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
 var _ rest.Scoper = &BackupOverviewStorage{}
-var _ rest.Getter = &BackupOverviewStorage{}
-var _ rest.Lister = &BackupOverviewStorage{}
+
+//var _ rest.Getter = &BackupOverviewStorage{}
+var _ rest.Creater = &BackupOverviewStorage{}
+
+//var _ rest.Lister = &BackupOverviewStorage{}
 var _ rest.Storage = &BackupOverviewStorage{}
 
 func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *BackupOverviewStorage {
@@ -54,17 +60,17 @@ func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *Backup
 		a:  a,
 		gr: schema.GroupResource{
 			Group:    ui.GroupName,
-			Resource: uiv1alpha1.ResourceBackupOverviews,
+			Resource: uiapi.ResourceBackupOverviews,
 		},
 		convertor: rest.NewDefaultTableConvertor(schema.GroupResource{
 			Group:    ui.GroupName,
-			Resource: uiv1alpha1.ResourceBackupOverviews,
+			Resource: uiapi.ResourceBackupOverviews,
 		}),
 	}
 }
 
 func (r *BackupOverviewStorage) GroupVersionKind(_ schema.GroupVersion) schema.GroupVersionKind {
-	return uiv1alpha1.SchemeGroupVersion.WithKind(uiv1alpha1.ResourceKindBackupOverview)
+	return uiapi.SchemeGroupVersion.WithKind(uiapi.ResourceKindBackupOverview)
 }
 
 func (r *BackupOverviewStorage) NamespaceScoped() bool {
@@ -72,10 +78,12 @@ func (r *BackupOverviewStorage) NamespaceScoped() bool {
 }
 
 func (r *BackupOverviewStorage) New() runtime.Object {
-	return &uiv1alpha1.BackupOverview{}
+	return &uiapi.BackupOverview{}
 }
 
-func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *metav1.GetOptions) (runtime.Object, error) {
+func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	in := obj.(*uiapi.BackupOverview)
+
 	ns, ok := apirequest.NamespaceFrom(ctx)
 	if !ok {
 		return nil, apierrors.NewBadRequest("missing namespace")
@@ -88,111 +96,63 @@ func (r *BackupOverviewStorage) Get(ctx context.Context, name string, opts *meta
 
 	attrs := authorizer.AttributesRecord{
 		User:      user,
-		Verb:      "get",
+		Verb:      "create",
 		Namespace: ns,
 		APIGroup:  r.gr.Group,
 		Resource:  r.gr.Resource,
-		Name:      name,
+		Name:      in.Name,
 	}
 	decision, why, err := r.a.Authorize(ctx, attrs)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
 	if decision != authorizer.DecisionAllow {
-		return nil, apierrors.NewForbidden(r.gr, name, errors.New(why))
+		return nil, apierrors.NewForbidden(r.gr, in.Name, errors.New(why))
 	}
-
-	// Todo: sent real data
-	return &uiv1alpha1.BackupOverview{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns,
-		},
-		Spec: uiv1alpha1.BackupOverviewSpec{
-			Schedule:           "Every 30 min",
-			LastBackupTime:     &metav1.Time{Time: time.Now()},
-			UpcomingBackupTime: &metav1.Time{Time: time.Now()},
-			BackupStorage:      "GCS-Bucket",
-			DataSize:           "10Gi",
-			NumberOfSnapshots:  100,
-			DataIntegrity:      true,
-			DataDirectory:      "/data/db",
-		},
-	}, nil
-}
-
-func (r *BackupOverviewStorage) NewList() runtime.Object {
-	return &uiv1alpha1.BackupOverviewList{}
-}
-
-func (r *BackupOverviewStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ns, ok := apirequest.NamespaceFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewBadRequest("missing namespace")
+	gvr := schema.GroupVersionResource{
+		Group:    in.Request.Group,
+		Version:  in.Request.Version,
+		Resource: in.Request.Resource,
 	}
-
-	user, ok := apirequest.UserFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewBadRequest("missing user info")
-	}
-
-	attrs := authorizer.AttributesRecord{
-		User:      user,
-		Verb:      "get",
-		Namespace: ns,
-		APIGroup:  r.gr.Group,
-		Resource:  r.gr.Resource,
-		Name:      "",
-	}
-
-	decision, why, err := r.a.Authorize(ctx, attrs)
+	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: in.Name, Namespace: in.Namespace})
 	if err != nil {
-		return nil, apierrors.NewInternalError(err)
+		return nil, fmt.Errorf("failed to get AppBinding, reason: %v", err)
 	}
-	if decision != authorizer.DecisionAllow {
-		return nil, apierrors.NewForbidden(r.gr, "", errors.New(why))
+	backupConfig, err := getBackupConfig(ctx, r.kc, ab)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get BackupConfiguration, reason: %v", err)
 	}
-
-	opts := client.ListOptions{Namespace: ns}
-	if options != nil {
-		if options.LabelSelector != nil && !options.LabelSelector.Empty() {
-			opts.LabelSelector = options.LabelSelector
-		}
-		if options.FieldSelector != nil && !options.FieldSelector.Empty() {
-			opts.FieldSelector = options.FieldSelector
-		}
-		opts.Limit = options.Limit
-		opts.Continue = options.Continue
+	repo, err := getRepository(ctx, r.kc, backupConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Repository, reason: %v", err)
 	}
 
-	//todo: Implement list logic
-
-	boList := make([]uiv1alpha1.BackupOverview, 0)
-	bo := uiv1alpha1.BackupOverview{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "mg-sh",
-			Namespace: ns,
-		},
-		Spec: uiv1alpha1.BackupOverviewSpec{
-			Schedule:           "Every 30 min",
-			LastBackupTime:     &metav1.Time{Time: time.Now()},
-			UpcomingBackupTime: &metav1.Time{Time: time.Now()},
-			BackupStorage:      "GCS-Bucket",
-			DataSize:           "10Gi",
-			NumberOfSnapshots:  100,
-			DataIntegrity:      true,
-			DataDirectory:      "/data/db",
-		},
+	exprDesc, _ := cron.NewDescriptor()
+	desc, err := exprDesc.ToDescription(backupConfig.Spec.Schedule, cron.Locale_en)
+	if err != nil {
+		return nil, err
 	}
-	boList = append(boList, bo)
 
-	res := uiv1alpha1.BackupOverviewList{
-		TypeMeta: metav1.TypeMeta{},
-		ListMeta: metav1.ListMeta{},
-		Items:    boList,
+	sched, err := rcron.NewParser(rcron.Minute | rcron.Hour | rcron.Dom | rcron.Month | rcron.Dow).Parse(backupConfig.Spec.Schedule)
+	if err != nil {
+		return nil, err
 	}
-	res.ListMeta.SelfLink = ""
-	return &res, nil
+
+	in.Response = uiapi.BackupOverviewResponse{
+		Schedule:           fmt.Sprintf("%s(%s)", backupConfig.Spec.Schedule, desc),
+		LastBackupTime:     repo.Status.LastBackupTime,
+		UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
+		Repository:         repo.Name,
+		DataSize:           repo.Status.TotalSize,
+		NumberOfSnapshots:  repo.Status.SnapshotCount,
+		DataIntegrity:      pointer.Bool(repo.Status.Integrity),
+	}
+	if backupConfig.Spec.Paused {
+		in.Response.Status = uiapi.BackupStatusPaused
+	} else {
+		in.Response.Status = uiapi.BackupStatusActive
+	}
+	return in, nil
 }
 
 func (r *BackupOverviewStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
