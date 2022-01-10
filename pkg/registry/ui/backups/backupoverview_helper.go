@@ -24,7 +24,6 @@ import (
 	stashv1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	stashv1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
-	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	appcatalog "kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1"
 	kubedbapi "kubedb.dev/apimachinery/apis/kubedb/v1alpha2"
@@ -39,7 +38,7 @@ func getAppBinding(ctx context.Context, kc client.Client, gvr schema.GroupVersio
 	}
 
 	abList := &appcatalog.AppBindingList{}
-	opts := &client.ListOptions{Namespace: core.NamespaceAll}
+	opts := &client.ListOptions{Namespace: key.Namespace}
 	selector := client.MatchingLabels(labels)
 	selector.ApplyToList(opts)
 	if err := kc.List(ctx, abList, opts); err != nil {

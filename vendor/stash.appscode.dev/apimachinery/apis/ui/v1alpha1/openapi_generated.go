@@ -19233,7 +19233,7 @@ func schema_apimachinery_apis_ui_v1alpha1_BackupOverviewRequest(ref common.Refer
 					"ref": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("kmodules.xyz/client-go/api/v1.ObjectReference"),
+							Ref:     ref("k8s.io/api/core/v1.LocalObjectReference"),
 						},
 					},
 				},
@@ -19241,7 +19241,7 @@ func schema_apimachinery_apis_ui_v1alpha1_BackupOverviewRequest(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"kmodules.xyz/client-go/api/v1.ObjectReference", "kmodules.xyz/client-go/api/v1.ResourceID"},
+			"k8s.io/api/core/v1.LocalObjectReference", "kmodules.xyz/client-go/api/v1.ResourceID"},
 	}
 }
 

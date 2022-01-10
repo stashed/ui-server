@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kmapi "kmodules.xyz/client-go/api/v1"
 )
@@ -29,8 +30,8 @@ const (
 
 // BackupOverviewRequest defines the request fields of BackupOverview
 type BackupOverviewRequest struct {
-	Resource kmapi.ResourceID      `json:"resource"`
-	Ref      kmapi.ObjectReference `json:"ref"`
+	Resource kmapi.ResourceID          `json:"resource"`
+	Ref      core.LocalObjectReference `json:"ref"`
 }
 
 // +kubebuilder:validation:Enum=Active;Paused

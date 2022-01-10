@@ -18,7 +18,6 @@ package backups
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -35,6 +34,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -72,40 +72,46 @@ func (r *BackupOverviewStorage) New() runtime.Object {
 	return &uiapi.BackupOverview{}
 }
 
-func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
 	in := obj.(*uiapi.BackupOverview)
+	if in.Request == nil {
+		return nil, apierrors.NewBadRequest("missing apirequest")
+	}
+	req := in.Request
 
 	ns, ok := apirequest.NamespaceFrom(ctx)
 	if !ok {
 		return nil, apierrors.NewBadRequest("missing namespace")
 	}
 
-	user, ok := apirequest.UserFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewBadRequest("missing user info")
-	}
+	//user, ok := apirequest.UserFrom(ctx)
+	//if !ok {
+	//	return nil, apierrors.NewBadRequest("missing user info")
+	//}
 
-	attrs := authorizer.AttributesRecord{
-		User:      user,
-		Verb:      "create",
-		Namespace: ns,
-		APIGroup:  r.gr.Group,
-		Resource:  r.gr.Resource,
-		Name:      in.Request.Ref.Name,
-	}
-	decision, why, err := r.a.Authorize(ctx, attrs)
+	//attrs := authorizer.AttributesRecord{
+	//	User:      user,
+	//	Verb:      "create",
+	//	Namespace: ns,
+	//	APIGroup:  r.gr.Group,
+	//	Resource:  r.gr.Resource,
+	//	Name:      in.Request.Ref.Name,
+	//}
+	//decision, why, err := r.a.Authorize(ctx, attrs)
+	//if err != nil {
+	//	return nil, apierrors.NewInternalError(err)
+	//}
+	//if decision != authorizer.DecisionAllow {
+	//	return nil, apierrors.NewForbidden(r.gr, in.Request.Ref.Name, errors.New(why))
+	//}
+
+	rid, err := kmapi.ExtractResourceID(r.kc.RESTMapper(), req.Resource)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
-	if decision != authorizer.DecisionAllow {
-		return nil, apierrors.NewForbidden(r.gr, in.Request.Ref.Name, errors.New(why))
-	}
-	gvr := schema.GroupVersionResource{
-		Group:    in.Request.Resource.Group,
-		Version:  in.Request.Resource.Version,
-		Resource: in.Request.Resource.Name,
-	}
-	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: in.Request.Ref.Name, Namespace: in.Request.Ref.Namespace})
+	gvr := rid.GroupVersionResource()
+
+	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: req.Ref.Name, Namespace: ns})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AppBinding, reason: %v", err)
 	}
