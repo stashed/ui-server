@@ -23,6 +23,7 @@ import (
 	"time"
 
 	stashapi "stash.appscode.dev/apimachinery/apis/stash"
+	stashv1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	stashv1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	"stash.appscode.dev/apimachinery/apis/ui"
 	uiapi "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
@@ -218,4 +219,18 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 	backupOverview.ManagedFields = nil
 
 	return backupOverview, nil
+}
+
+// Helper function to get the Repository for a Stash BackupConfiguration object
+func getRepository(ctx context.Context, kc client.Client, backupConfig *stashv1beta1.BackupConfiguration) (*stashv1alpha1.Repository, error) {
+	repoKey := client.ObjectKey{Name: backupConfig.Spec.Repository.Name, Namespace: backupConfig.Spec.Repository.Namespace}
+	if repoKey.Namespace == "" {
+		repoKey.Namespace = backupConfig.Namespace
+	}
+
+	repo := &stashv1alpha1.Repository{}
+	if err := kc.Get(ctx, repoKey, repo); err != nil {
+		return nil, err
+	}
+	return repo, nil
 }
