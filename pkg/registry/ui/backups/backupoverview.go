@@ -18,9 +18,12 @@ package backups
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	stashapi "stash.appscode.dev/apimachinery/apis/stash"
+	stashv1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	"stash.appscode.dev/apimachinery/apis/ui"
 	uiapi "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
 
@@ -28,35 +31,40 @@ import (
 	rcron "github.com/robfig/cron/v3"
 	"gomodules.xyz/pointer"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-	kmapi "kmodules.xyz/client-go/api/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type BackupOverviewStorage struct {
-	kc client.Client
-	a  authorizer.Authorizer
-	gr schema.GroupResource
+	kc        client.Client
+	a         authorizer.Authorizer
+	gr        schema.GroupResource
+	convertor rest.TableConvertor
 }
 
 var _ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
 var _ rest.Scoper = &BackupOverviewStorage{}
-var _ rest.Creater = &BackupOverviewStorage{}
-var _ rest.Storage = &BackupOverviewStorage{}
+var _ rest.Getter = &BackupOverviewStorage{}
+var _ rest.Lister = &BackupOverviewStorage{}
 
 func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *BackupOverviewStorage {
 	return &BackupOverviewStorage{
 		kc: kc,
 		a:  a,
 		gr: schema.GroupResource{
+			Group:    stashapi.GroupName,
+			Resource: stashv1beta1.ResourcePluralBackupConfiguration,
+		},
+		convertor: rest.NewDefaultTableConvertor(schema.GroupResource{
 			Group:    ui.GroupName,
 			Resource: uiapi.ResourceBackupOverviews,
-		},
+		}),
 	}
 }
 
@@ -72,82 +80,142 @@ func (r *BackupOverviewStorage) New() runtime.Object {
 	return &uiapi.BackupOverview{}
 }
 
-func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
-	in := obj.(*uiapi.BackupOverview)
-	if in.Request == nil {
-		return nil, apierrors.NewBadRequest("missing apirequest")
-	}
-	req := in.Request
+func (r *BackupOverviewStorage) NewList() runtime.Object {
+	return &uiapi.BackupOverviewList{}
+}
 
+func (r *BackupOverviewStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	ns, ok := apirequest.NamespaceFrom(ctx)
 	if !ok {
 		return nil, apierrors.NewBadRequest("missing namespace")
 	}
 
-	//user, ok := apirequest.UserFrom(ctx)
-	//if !ok {
-	//	return nil, apierrors.NewBadRequest("missing user info")
-	//}
+	user, ok := apirequest.UserFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewBadRequest("missing user info")
+	}
 
-	//attrs := authorizer.AttributesRecord{
-	//	User:      user,
-	//	Verb:      "create",
-	//	Namespace: ns,
-	//	APIGroup:  r.gr.Group,
-	//	Resource:  r.gr.Resource,
-	//	Name:      in.Request.Ref.Name,
-	//}
-	//decision, why, err := r.a.Authorize(ctx, attrs)
-	//if err != nil {
-	//	return nil, apierrors.NewInternalError(err)
-	//}
-	//if decision != authorizer.DecisionAllow {
-	//	return nil, apierrors.NewForbidden(r.gr, in.Request.Ref.Name, errors.New(why))
-	//}
-
-	rid, err := kmapi.ExtractResourceID(r.kc.RESTMapper(), req.Resource)
+	attrs := authorizer.AttributesRecord{
+		User:      user,
+		Verb:      "get",
+		Namespace: ns,
+		APIGroup:  r.gr.Group,
+		Resource:  r.gr.Resource,
+		Name:      name,
+	}
+	decision, why, err := r.a.Authorize(ctx, attrs)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
-	gvr := rid.GroupVersionResource()
-
-	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: req.Ref.Name, Namespace: ns})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get AppBinding, reason: %v", err)
+	if decision != authorizer.DecisionAllow {
+		return nil, apierrors.NewForbidden(r.gr, name, errors.New(why))
 	}
-	backupConfig, err := getBackupConfig(ctx, r.kc, ab)
-	if err != nil {
+	backupConfig := &stashv1beta1.BackupConfiguration{}
+	if err := r.kc.Get(ctx, client.ObjectKey{Name: name, Namespace: ns}, backupConfig); err != nil {
 		return nil, fmt.Errorf("failed to get BackupConfiguration, reason: %v", err)
 	}
-	repo, err := getRepository(ctx, r.kc, backupConfig)
+	return r.getBackupOverview(ctx, backupConfig.DeepCopy())
+}
+
+func (r *BackupOverviewStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ns, ok := apirequest.NamespaceFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewBadRequest("missing namespace")
+	}
+
+	user, ok := apirequest.UserFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewBadRequest("missing user info")
+	}
+
+	attrs := authorizer.AttributesRecord{
+		User:      user,
+		Verb:      "list",
+		Namespace: ns,
+		APIGroup:  r.gr.Group,
+		Resource:  r.gr.Resource,
+	}
+	decision, why, err := r.a.Authorize(ctx, attrs)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+	if decision != authorizer.DecisionAllow {
+		return nil, apierrors.NewForbidden(r.gr, "", errors.New(why))
+	}
+
+	opts := client.ListOptions{Namespace: ns}
+	if options != nil {
+		if options.LabelSelector != nil && !options.LabelSelector.Empty() {
+			opts.LabelSelector = options.LabelSelector
+		}
+		if options.FieldSelector != nil && !options.FieldSelector.Empty() {
+			opts.FieldSelector = options.FieldSelector
+		}
+		opts.Limit = options.Limit
+		opts.Continue = options.Continue
+	}
+
+	backupCfgList := stashv1beta1.BackupConfigurationList{}
+	if err := r.kc.List(ctx, &backupCfgList, &opts); err != nil {
+		return nil, err
+	}
+
+	backupOverviews := make([]uiapi.BackupOverview, 0, len(backupCfgList.Items))
+	for _, c := range backupCfgList.Items {
+		bo, err := r.getBackupOverview(ctx, c.DeepCopy())
+		if err != nil {
+			return nil, err
+		}
+		backupOverviews = append(backupOverviews, *bo)
+	}
+	result := &uiapi.BackupOverviewList{
+		TypeMeta: metav1.TypeMeta{},
+		ListMeta: backupCfgList.ListMeta,
+		Items:    backupOverviews,
+	}
+	return result, nil
+}
+
+func (r *BackupOverviewStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return r.convertor.ConvertToTable(ctx, object, tableOptions)
+}
+
+func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stashv1beta1.BackupConfiguration) (*uiapi.BackupOverview, error) {
+	repo, err := getRepository(ctx, r.kc, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Repository, reason: %v", err)
 	}
 
 	exprDesc, _ := cron.NewDescriptor()
-	desc, err := exprDesc.ToDescription(backupConfig.Spec.Schedule, cron.Locale_en)
+	desc, err := exprDesc.ToDescription(cfg.Spec.Schedule, cron.Locale_en)
 	if err != nil {
 		return nil, err
 	}
 
-	sched, err := rcron.NewParser(rcron.Minute | rcron.Hour | rcron.Dom | rcron.Month | rcron.Dow).Parse(backupConfig.Spec.Schedule)
+	sched, err := rcron.NewParser(rcron.Minute | rcron.Hour | rcron.Dom | rcron.Month | rcron.Dow).Parse(cfg.Spec.Schedule)
 	if err != nil {
 		return nil, err
 	}
 
-	in.Response = uiapi.BackupOverviewResponse{
-		Schedule:           fmt.Sprintf("%s(%s)", backupConfig.Spec.Schedule, desc),
-		LastBackupTime:     repo.Status.LastBackupTime,
-		UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
-		Repository:         repo.Name,
-		DataSize:           repo.Status.TotalSize,
-		NumberOfSnapshots:  repo.Status.SnapshotCount,
-		DataIntegrity:      pointer.Bool(repo.Status.Integrity),
+	backupOverview := &uiapi.BackupOverview{
+		ObjectMeta: *cfg.ObjectMeta.DeepCopy(),
+		Spec: uiapi.BackupOverviewSpec{
+			Schedule:           fmt.Sprintf("%s(%s)", cfg.Spec.Schedule, desc),
+			LastBackupTime:     repo.Status.LastBackupTime,
+			UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
+			Repository:         repo.Name,
+			DataSize:           repo.Status.TotalSize,
+			NumberOfSnapshots:  repo.Status.SnapshotCount,
+			DataIntegrity:      pointer.Bool(repo.Status.Integrity),
+		},
 	}
-	if backupConfig.Spec.Paused {
-		in.Response.Status = uiapi.BackupStatusPaused
+	if cfg.Spec.Paused {
+		backupOverview.Spec.Status = uiapi.BackupStatusPaused
 	} else {
-		in.Response.Status = uiapi.BackupStatusActive
+		backupOverview.Spec.Status = uiapi.BackupStatusActive
 	}
-	return in, nil
+	backupOverview.SelfLink = ""
+	backupOverview.ManagedFields = nil
+
+	return backupOverview, nil
 }

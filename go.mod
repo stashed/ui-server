@@ -19,9 +19,8 @@ require (
 	kmodules.xyz/client-go v0.0.0-20220108081101-27afc2ac4ebe
 	kmodules.xyz/custom-resources v0.0.0-20220104123914-3c036dd7c1cd
 	kmodules.xyz/resource-metrics v0.0.6
-	kubedb.dev/apimachinery v0.24.0
 	sigs.k8s.io/controller-runtime v0.9.0
-	stash.appscode.dev/apimachinery v0.17.1-0.20220110104327-405050dd4b60
+	stash.appscode.dev/apimachinery v0.17.1-0.20220110124058-68c8961440ea
 )
 
 require (
@@ -110,7 +109,6 @@ require (
 	gomodules.xyz/encoding v0.0.2 // indirect
 	gomodules.xyz/flags v0.1.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
-	gomodules.xyz/mergo v0.3.13-0.20210702100041-9d62ff8ece4d // indirect
 	gomodules.xyz/sets v0.2.0 // indirect
 	gomodules.xyz/wait v0.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -128,7 +126,6 @@ require (
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
 	k8s.io/kubernetes v1.21.1 // indirect
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176 // indirect
-	kmodules.xyz/monitoring-agent-api v0.0.0-20210928135619-38ca075a2dbd // indirect
 	kmodules.xyz/objectstore-api v0.0.0-20211116180107-8720be0c9bf7 // indirect
 	kmodules.xyz/offshoot-api v0.0.0-20211103060642-3e217667cf41 // indirect
 	kmodules.xyz/prober v0.0.0-20210618020259-5836fb959027 // indirect
