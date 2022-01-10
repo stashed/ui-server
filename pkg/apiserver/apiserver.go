@@ -39,7 +39,6 @@ import (
 	"k8s.io/klog/v2/klogr"
 	"kmodules.xyz/authorizer/rbac"
 	appcataloginstall "kmodules.xyz/custom-resources/apis/appcatalog/install"
-	kubedbinstall "kubedb.dev/apimachinery/apis/kubedb/install"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -56,7 +55,6 @@ var (
 func init() {
 	uiinstall.Install(Scheme)
 	stashinstall.Install(Scheme)
-	kubedbinstall.Install(Scheme)
 	appcataloginstall.Install(Scheme)
 
 	_ = clientgoscheme.AddToScheme(Scheme)

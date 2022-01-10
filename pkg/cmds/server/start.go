@@ -26,6 +26,7 @@ import (
 	uiv1alpha1 "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
 	"stash.appscode.dev/ui-server/pkg/apiserver"
 
+	v "gomodules.xyz/x/version"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/features"
@@ -92,10 +93,17 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 	clientcmd.Fix(serverConfig.ClientConfig)
 
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
-		ou.GetDefinitions(api.GetOpenAPIDefinitions, uiv1alpha1.GetOpenAPIDefinitions),
+		ou.GetDefinitions(
+			api.GetOpenAPIDefinitions,
+			uiv1alpha1.GetOpenAPIDefinitions,
+		),
 		openapi.NewDefinitionNamer(apiserver.Scheme))
 	serverConfig.OpenAPIConfig.Info.Title = "stash-ui-server"
-	serverConfig.OpenAPIConfig.Info.Version = "v0.0.1"
+	serverConfig.OpenAPIConfig.Info.Version = v.Version.Version
+	serverConfig.OpenAPIConfig.IgnorePrefixes = []string{
+		"/swaggerapi",
+		fmt.Sprintf("/apis/%s/%s", uiv1alpha1.SchemeGroupVersion, uiv1alpha1.ResourceBackupOverviews),
+	}
 
 	config := &apiserver.Config{
 		GenericConfig: serverConfig,
