@@ -39,19 +39,14 @@ import (
 )
 
 type BackupOverviewStorage struct {
-	kc        client.Client
-	a         authorizer.Authorizer
-	gr        schema.GroupResource
-	convertor rest.TableConvertor
+	kc client.Client
+	a  authorizer.Authorizer
+	gr schema.GroupResource
 }
 
 var _ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
 var _ rest.Scoper = &BackupOverviewStorage{}
-
-//var _ rest.Getter = &BackupOverviewStorage{}
 var _ rest.Creater = &BackupOverviewStorage{}
-
-//var _ rest.Lister = &BackupOverviewStorage{}
 var _ rest.Storage = &BackupOverviewStorage{}
 
 func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *BackupOverviewStorage {
@@ -62,10 +57,6 @@ func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *Backup
 			Group:    ui.GroupName,
 			Resource: uiapi.ResourceBackupOverviews,
 		},
-		convertor: rest.NewDefaultTableConvertor(schema.GroupResource{
-			Group:    ui.GroupName,
-			Resource: uiapi.ResourceBackupOverviews,
-		}),
 	}
 }
 
@@ -100,21 +91,21 @@ func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, 
 		Namespace: ns,
 		APIGroup:  r.gr.Group,
 		Resource:  r.gr.Resource,
-		Name:      in.Name,
+		Name:      in.Request.Ref.Name,
 	}
 	decision, why, err := r.a.Authorize(ctx, attrs)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
 	if decision != authorizer.DecisionAllow {
-		return nil, apierrors.NewForbidden(r.gr, in.Name, errors.New(why))
+		return nil, apierrors.NewForbidden(r.gr, in.Request.Ref.Name, errors.New(why))
 	}
 	gvr := schema.GroupVersionResource{
-		Group:    in.Request.Group,
-		Version:  in.Request.Version,
-		Resource: in.Request.Resource,
+		Group:    in.Request.Resource.Group,
+		Version:  in.Request.Resource.Version,
+		Resource: in.Request.Resource.Name,
 	}
-	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: in.Name, Namespace: in.Namespace})
+	ab, err := getAppBinding(ctx, r.kc, gvr, client.ObjectKey{Name: in.Request.Ref.Name, Namespace: in.Request.Ref.Namespace})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AppBinding, reason: %v", err)
 	}
@@ -153,8 +144,4 @@ func (r *BackupOverviewStorage) Create(ctx context.Context, obj runtime.Object, 
 		in.Response.Status = uiapi.BackupStatusActive
 	}
 	return in, nil
-}
-
-func (r *BackupOverviewStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return r.convertor.ConvertToTable(ctx, object, tableOptions)
 }

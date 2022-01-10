@@ -16,12 +16,12 @@ require (
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	kmodules.xyz/authorizer v0.0.0-20211118040746-5e26f529f623
-	kmodules.xyz/client-go v0.0.0-20211223200000-0c37b46c4f50
-	kmodules.xyz/custom-resources v0.0.0-20211221054614-ef837cc2b4be
+	kmodules.xyz/client-go v0.0.0-20220108081101-27afc2ac4ebe
+	kmodules.xyz/custom-resources v0.0.0-20220104123914-3c036dd7c1cd
 	kmodules.xyz/resource-metrics v0.0.6
 	kubedb.dev/apimachinery v0.24.0
 	sigs.k8s.io/controller-runtime v0.9.0
-	stash.appscode.dev/apimachinery v0.17.1-0.20220106115108-708722ac4694
+	stash.appscode.dev/apimachinery v0.17.1-0.20220110045344-b4d5a50a3362
 )
 
 require (
@@ -103,7 +103,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.1-0.20210427153610-6397a11608ad // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
