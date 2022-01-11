@@ -1,18 +1,42 @@
 apiVersion: ui.stash.appscode.com/v1alpha1
 kind: BackupOverview
 metadata:
-  name: mg-sh
+  creationTimestamp: "2022-01-05T11:30:53Z"
+  finalizers:
+    - stash.appscode.com
+  generation: 4
+  name: mg-sh-backup
   namespace: demo
-request:
-  group: kubedb.com
-  resource: mongodbs
-  version: v1alpha2
-response:
+  resourceVersion: "145931"
+  uid: 34be13d3-3883-439a-94db-41402b129238
+spec:
   dataIntegrity: true
-  dataSize: 133.190 KiB
-  lastBackupTime: "2022-01-05T12:15:06Z"
+  dataSize: 134.210 KiB
+  lastBackupTime: "2022-01-06T12:09:43Z"
   numberOfSnapshots: 20
   repository: gcs-repo
-  schedule: '*/5 * * * *(Every 5 minutes)'
+  schedule: '"*/5 * * * *" (Every 5 minutes)'
   status: Paused
-  upcomingBackupTime: "2022-01-06T11:55:00Z"
+  upcomingBackupTime: "2022-01-11T11:40:00Z"
+status:
+  conditions:
+    - lastTransitionTime: "2022-01-05T11:30:53Z"
+      message: Repository demo/gcs-repo exist.
+      reason: RepositoryAvailable
+      status: "True"
+      type: RepositoryFound
+    - lastTransitionTime: "2022-01-05T11:30:53Z"
+      message: Backend Secret demo/gcs-secret exist.
+      reason: BackendSecretAvailable
+      status: "True"
+      type: BackendSecretFound
+    - lastTransitionTime: "2022-01-05T11:30:53Z"
+      message: Backup target appcatalog.appscode.com/v1alpha1 appbinding/mg-sh found.
+      reason: TargetAvailable
+      status: "True"
+      type: BackupTargetFound
+    - lastTransitionTime: "2022-01-05T11:30:53Z"
+      message: Successfully created backup triggering CronJob.
+      reason: CronJobCreationSucceeded
+      status: "True"
+      type: CronJobCreated
