@@ -42,6 +42,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	LastAppliedConfiguration = "kubectl.kubernetes.io/last-applied-configuration"
+)
+
 type BackupOverviewStorage struct {
 	kc        client.Client
 	a         authorizer.Authorizer
@@ -201,7 +205,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 	backupOverview := &uiapi.BackupOverview{
 		ObjectMeta: *cfg.ObjectMeta.DeepCopy(),
 		Spec: uiapi.BackupOverviewSpec{
-			Schedule:           fmt.Sprintf("%s(%s)", cfg.Spec.Schedule, desc),
+			Schedule:           fmt.Sprintf("%q (%s)", cfg.Spec.Schedule, desc),
 			LastBackupTime:     repo.Status.LastBackupTime,
 			UpcomingBackupTime: &metav1.Time{Time: sched.Next(time.Now())},
 			Repository:         repo.Name,
@@ -209,6 +213,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 			NumberOfSnapshots:  repo.Status.SnapshotCount,
 			DataIntegrity:      pointer.Bool(repo.Status.Integrity),
 		},
+		Status: cfg.Status,
 	}
 	if cfg.Spec.Paused {
 		backupOverview.Spec.Status = uiapi.BackupStatusPaused
@@ -217,6 +222,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 	}
 	backupOverview.SelfLink = ""
 	backupOverview.ManagedFields = nil
+	delete(backupOverview.ObjectMeta.Annotations, LastAppliedConfiguration)
 
 	return backupOverview, nil
 }
