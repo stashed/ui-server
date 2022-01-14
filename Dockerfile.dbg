@@ -12,24 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:alpine3.11
+FROM appscode/golang-dev:1.17
 
-RUN apk add --no-cache git
-
-RUN go get -u github.com/go-delve/delve/cmd/dlv
-
-
-
-FROM alpine
+FROM {ARG_FROM}
 
 LABEL org.opencontainers.image.source https://github.com/stashed/ui-server
 
-COPY bin/{ARG_OS}_{ARG_ARCH}/{ARG_BIN} /bin/{ARG_BIN}
-COPY --from=0 /go/bin/dlv /bin/dlv
-
-#RUN chmod +x /bin/dlv
-#RUN chmod +x /bin/{ARG_BIN}
+ADD bin/{ARG_OS}_{ARG_ARCH}/{ARG_BIN} /{ARG_BIN}
+COPY --from=0 /usr/local/bin/dlv /bin/dlv
 
 EXPOSE 40000
 
-ENTRYPOINT ["/bin/dlv", "--listen=:40000", "--headless=true", "--api-version=2", "exec", "/bin/{ARG_BIN}"]
+ENTRYPOINT ["/bin/dlv", "--listen=:40000", "--headless=true", "--api-version=2", "exec", "/{ARG_BIN}", "--"]
