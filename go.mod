@@ -3,6 +3,7 @@ module stash.appscode.dev/ui-server
 go 1.17
 
 require (
+	github.com/google/uuid v1.1.2
 	github.com/lnquy/cron v1.1.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.1.3
@@ -15,10 +16,10 @@ require (
 	k8s.io/apiserver v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
-	kmodules.xyz/authorizer v0.0.0-20211118040746-5e26f529f623
-	kmodules.xyz/client-go v0.0.0-20220108081101-27afc2ac4ebe
+	kmodules.xyz/authorizer v0.0.0-20211121124031-167d0ef7c671
+	kmodules.xyz/client-go v0.0.0-20220112225403-2a109f231e9b
 	kmodules.xyz/custom-resources v0.0.0-20220104123914-3c036dd7c1cd
-	kmodules.xyz/resource-metrics v0.0.6
+	kmodules.xyz/resource-metrics v0.0.7-0.20220113235224-64b74ecbc4f8
 	sigs.k8s.io/controller-runtime v0.9.0
 	stash.appscode.dev/apimachinery v0.17.1-0.20220110124058-68c8961440ea
 )
@@ -60,7 +61,6 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.1.2 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
@@ -224,7 +224,7 @@ replace k8s.io/api => k8s.io/api v0.21.1
 
 replace k8s.io/apimachinery => github.com/kmodules/apimachinery v0.21.2-rc.0.0.20210617231004-332981b97d2d
 
-replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.2-0.20210716212718-83e5493ac170
+replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.2-0.20220112070009-e3f6e88991d9
 
 replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.1
 
