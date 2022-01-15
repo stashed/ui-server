@@ -28,6 +28,7 @@ import (
 	"stash.appscode.dev/apimachinery/apis/ui"
 	uiapi "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
 
+	"github.com/google/uuid"
 	"github.com/lnquy/cron"
 	rcron "github.com/robfig/cron/v3"
 	"gomodules.xyz/pointer"
@@ -36,14 +37,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	mu "kmodules.xyz/client-go/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-const (
-	LastAppliedConfiguration = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
 type BackupOverviewStorage struct {
@@ -202,7 +201,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 		return nil, err
 	}
 
-	backupOverview := &uiapi.BackupOverview{
+	result := &uiapi.BackupOverview{
 		ObjectMeta: *cfg.ObjectMeta.DeepCopy(),
 		Spec: uiapi.BackupOverviewSpec{
 			Schedule:           fmt.Sprintf("%q (%s)", cfg.Spec.Schedule, desc),
@@ -216,15 +215,18 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 		Status: cfg.Status,
 	}
 	if cfg.Spec.Paused {
-		backupOverview.Spec.Status = uiapi.BackupStatusPaused
+		result.Spec.Status = uiapi.BackupStatusPaused
 	} else {
-		backupOverview.Spec.Status = uiapi.BackupStatusActive
+		result.Spec.Status = uiapi.BackupStatusActive
 	}
-	backupOverview.SelfLink = ""
-	backupOverview.ManagedFields = nil
-	delete(backupOverview.ObjectMeta.Annotations, LastAppliedConfiguration)
+	result.UID = types.UID(uuid.Must(uuid.NewUUID()).String())
+	result.SelfLink = ""
+	result.ManagedFields = nil
+	result.OwnerReferences = nil
+	result.Finalizers = nil
+	delete(result.ObjectMeta.Annotations, mu.LastAppliedConfigAnnotation)
 
-	return backupOverview, nil
+	return result, nil
 }
 
 // Helper function to get the Repository for a Stash BackupConfiguration object
