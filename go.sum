@@ -222,7 +222,6 @@ github.com/go-logr/logr v0.1.0/go.mod h1:ixOQHD9gLJUVQQ2ZOR7zLEifBX6tGkNJF4QyIY7
 github.com/go-logr/logr v0.2.0/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTgseGU=
 github.com/go-logr/logr v0.4.0 h1:K7/B1jt6fIBQVd4Owv2MqGQClcgf0R266+7C/QjRcLc=
 github.com/go-logr/logr v0.4.0/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTgseGU=
-github.com/go-logr/zapr v0.1.0/go.mod h1:tabnROwaDl0UNxkVeFRbY8bwB37GwRv0P8lg6aAiEnk=
 github.com/go-logr/zapr v0.4.0 h1:uc1uML3hRYL9/ZZPdgHS/n8Nzo+eaYL/Efxkkamf7OM=
 github.com/go-logr/zapr v0.4.0/go.mod h1:tabnROwaDl0UNxkVeFRbY8bwB37GwRv0P8lg6aAiEnk=
 github.com/go-openapi/analysis v0.19.5/go.mod h1:hkEAkxagaIvIP7VTn8ygJNkd4kAYON2rCu0v0ObL0AU=
@@ -392,6 +391,8 @@ github.com/kmodules/apimachinery v0.21.2-rc.0.0.20210617231004-332981b97d2d h1:6
 github.com/kmodules/apimachinery v0.21.2-rc.0.0.20210617231004-332981b97d2d/go.mod h1:jbreFvJo3ov9rj7eWT7+sYiRx+qZuCYXwWT1bcDswPY=
 github.com/kmodules/apiserver v0.21.2-0.20220112070009-e3f6e88991d9 h1:ZHj6YH/If+3Gycc0Dm1NH1GexUkmxrRyFMb5SFpl8dU=
 github.com/kmodules/apiserver v0.21.2-0.20220112070009-e3f6e88991d9/go.mod h1:nLLYZvMWn35glJ4/FZRhzLG/3MPxAaZTgV4FJZdr+tY=
+github.com/kmodules/controller-runtime v0.9.1-0.20220112213948-0e7a1aa77c8e h1:ZtRo4J+890eICk3TfR40VfKY9Ori7r7vmgEYSPr/kuk=
+github.com/kmodules/controller-runtime v0.9.1-0.20220112213948-0e7a1aa77c8e/go.mod h1:TgkfvrhhEw3PlI0BRL/5xM+89y3/yc0ZDfdbTl84si8=
 github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210617232219-a432af45d932 h1:J4rp2NvjFplpFgWe0DXz+PM1XotXTLmtTFhPSkRbRa8=
 github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210617232219-a432af45d932/go.mod h1:mgkvSg6x5tL795vhwYyg0pKDYmCm/WYdy8LI54LvRJA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -1095,8 +1096,8 @@ kmodules.xyz/client-go v0.0.0-20210617233340-13d22e91512b/go.mod h1:A6GAK6xP5zBu
 kmodules.xyz/client-go v0.0.0-20211013093146-1fbfd52e78c9/go.mod h1:0gkPeALtYjB27OHt4rd6+ZmMgoVTHVLtEJQeU23/gtA=
 kmodules.xyz/client-go v0.0.0-20220104114408-2a3a05dbe89f/go.mod h1:xxl1ve1Obe4xaW+XjXsNHyLTni4QPIvHn9TfnYEoQRo=
 kmodules.xyz/client-go v0.0.0-20220108081101-27afc2ac4ebe/go.mod h1:xxl1ve1Obe4xaW+XjXsNHyLTni4QPIvHn9TfnYEoQRo=
-kmodules.xyz/client-go v0.0.0-20220112225403-2a109f231e9b h1:gzpupcrXhec2PGWBI9Vmo9QYBYyf8Ns7IImtDR1n9WA=
-kmodules.xyz/client-go v0.0.0-20220112225403-2a109f231e9b/go.mod h1:Lr0QB1gymE1jWNEkeVjs+Wej6xhGh2bODlWAmJTo+7g=
+kmodules.xyz/client-go v0.0.0-20220113110622-dbc40d36b6f8 h1:6rqJpuJiVZVSo/7ESyZWyoC4eQaQpHtPxrrHmMLZ+PU=
+kmodules.xyz/client-go v0.0.0-20220113110622-dbc40d36b6f8/go.mod h1:Lr0QB1gymE1jWNEkeVjs+Wej6xhGh2bODlWAmJTo+7g=
 kmodules.xyz/constants v0.0.0-20210218100002-2c304bfda278/go.mod h1:DbiFk1bJ1KEO94t1SlAn7tzc+Zz95rSXgyUKa2nzPmY=
 kmodules.xyz/crd-schema-fuzz v0.0.0-20210618002152-fae23aef5fb4 h1:vg6VZCnkHu3kJKdUe/oswi7MhjUVcZpyP/aXYhKFZ7M=
 kmodules.xyz/crd-schema-fuzz v0.0.0-20210618002152-fae23aef5fb4/go.mod h1:IIkUctlfoptoci0BOrsUf8ya+MOG5uaeh1PE4uzaIbA=
@@ -1122,9 +1123,6 @@ rsc.io/quote/v3 v3.1.0/go.mod h1:yEA65RcK8LyAZtP9Kv3t0HmxON59tX3rD+tICJqUlj0=
 rsc.io/sampler v1.3.0/go.mod h1:T1hPZKmBbMNahiBKFy5HrXp6adAjACjK9JXDnKaTXpA=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15 h1:4uqm9Mv+w2MmBYD+F4qf/v6tDFUdPOk29C095RbU5mY=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15/go.mod h1:LEScyzhFmoF5pso/YSeBstl57mOzx9xlU9n85RGrDQg=
-sigs.k8s.io/controller-runtime v0.6.0/go.mod h1:CpYf5pdNY/B352A1TFLAS2JVSlnGQ5O2cftPHndTroo=
-sigs.k8s.io/controller-runtime v0.9.0 h1:ZIZ/dtpboPSbZYY7uUz2OzrkaBTOThx2yekLtpGB+zY=
-sigs.k8s.io/controller-runtime v0.9.0/go.mod h1:TgkfvrhhEw3PlI0BRL/5xM+89y3/yc0ZDfdbTl84si8=
 sigs.k8s.io/kustomize/api v0.8.8 h1:G2z6JPSSjtWWgMeWSoHdXqyftJNmMmyxXpwENGoOtGE=
 sigs.k8s.io/kustomize/api v0.8.8/go.mod h1:He1zoK0nk43Pc6NlV085xDXDXTNprtcyKZVm3swsdNY=
 sigs.k8s.io/kustomize/cmd/config v0.9.10/go.mod h1:Mrby0WnRH7hA6OwOYnYpfpiY0WJIMgYrEDfwOeFdMK0=
