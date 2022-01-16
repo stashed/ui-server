@@ -17,12 +17,14 @@ require (
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	kmodules.xyz/authorizer v0.0.0-20211121124031-167d0ef7c671
-	kmodules.xyz/client-go v0.0.0-20220112225403-2a109f231e9b
+	kmodules.xyz/client-go v0.0.0-20220113110622-dbc40d36b6f8
 	kmodules.xyz/custom-resources v0.0.0-20220104123914-3c036dd7c1cd
 	kmodules.xyz/resource-metrics v0.0.7-0.20220113235224-64b74ecbc4f8
 	sigs.k8s.io/controller-runtime v0.9.0
 	stash.appscode.dev/apimachinery v0.17.1-0.20220110124058-68c8961440ea
 )
+
+replace sigs.k8s.io/controller-runtime => github.com/kmodules/controller-runtime v0.9.1-0.20220112213948-0e7a1aa77c8e
 
 require (
 	cloud.google.com/go v0.54.0 // indirect

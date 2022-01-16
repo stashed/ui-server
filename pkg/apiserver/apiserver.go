@@ -38,6 +38,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2/klogr"
 	"kmodules.xyz/authorizer/rbac"
+	cu "kmodules.xyz/client-go/client"
 	appcataloginstall "kmodules.xyz/custom-resources/apis/appcatalog/install"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -134,10 +135,9 @@ func (c completedConfig) New(ctx context.Context) (*UIServer, error) {
 		LeaderElection:         false,
 		LeaderElectionID:       "5b87adeb.ui.stash.appscode.com",
 		ClientDisableCacheFor: []client.Object{
-			&core.Namespace{},
-			&core.Secret{},
 			&core.Pod{},
 		},
+		NewClient: cu.NewClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to start manager, reason: %v", err)
