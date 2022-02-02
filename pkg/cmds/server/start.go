@@ -44,6 +44,7 @@ const defaultEtcdPathPrefix = "/registry/ui.stash.appscode.com"
 // UIServerOptions contains state for master/api server
 type UIServerOptions struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
+	ExtraOptions       *ExtraOptions
 
 	StdOut io.Writer
 	StdErr io.Writer
@@ -57,9 +58,9 @@ func NewUIServerOptions(out, errOut io.Writer) *UIServerOptions {
 			defaultEtcdPathPrefix,
 			apiserver.Codecs.LegacyCodec(uiv1alpha1.SchemeGroupVersion),
 		),
-
-		StdOut: out,
-		StdErr: errOut,
+		ExtraOptions: NewExtraOptions(),
+		StdOut:       out,
+		StdErr:       errOut,
 	}
 	o.RecommendedOptions.Etcd = nil
 	o.RecommendedOptions.Admission = nil
@@ -103,6 +104,10 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 	serverConfig.OpenAPIConfig.IgnorePrefixes = []string{
 		"/swaggerapi",
 		fmt.Sprintf("/apis/%s/%s", uiv1alpha1.SchemeGroupVersion, uiv1alpha1.ResourceBackupOverviews),
+	}
+
+	if err := o.ExtraOptions.ApplyTo(serverConfig.ClientConfig); err != nil {
+		return nil, err
 	}
 
 	config := &apiserver.Config{
