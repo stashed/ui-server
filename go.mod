@@ -16,13 +16,13 @@ require (
 	k8s.io/apimachinery v0.21.1
 	k8s.io/apiserver v0.21.1
 	k8s.io/client-go v0.21.1
-	k8s.io/klog/v2 v2.8.0
+	k8s.io/klog/v2 v2.9.0
 	kmodules.xyz/authorizer v0.0.0-20211121124031-167d0ef7c671
 	kmodules.xyz/client-go v0.0.0-20220203031013-1de48437aaf3
 	kmodules.xyz/custom-resources v0.0.0-20220208103158-61b298634e43
 	kmodules.xyz/resource-metrics v0.0.8
 	sigs.k8s.io/controller-runtime v0.9.0
-	stash.appscode.dev/apimachinery v0.17.1-0.20220110124058-68c8961440ea
+	stash.appscode.dev/apimachinery v0.18.0
 )
 
 replace sigs.k8s.io/controller-runtime => github.com/kmodules/controller-runtime v0.9.1-0.20220112213948-0e7a1aa77c8e
@@ -88,7 +88,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
-	github.com/sergi/go-diff v1.1.0 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
@@ -125,11 +125,11 @@ require (
 	k8s.io/cli-runtime v0.21.1 // indirect
 	k8s.io/component-base v0.21.1 // indirect
 	k8s.io/component-helpers v0.21.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
+	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	k8s.io/kubernetes v1.21.1 // indirect
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176 // indirect
-	kmodules.xyz/objectstore-api v0.0.0-20211116180107-8720be0c9bf7 // indirect
-	kmodules.xyz/offshoot-api v0.0.0-20211103060642-3e217667cf41 // indirect
+	kmodules.xyz/objectstore-api v0.0.0-20211207131029-3271069de43e // indirect
+	kmodules.xyz/offshoot-api v0.0.0-20211207130839-cc7187e020cf // indirect
 	kmodules.xyz/prober v0.0.0-20210618020259-5836fb959027 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15 // indirect
 	sigs.k8s.io/kustomize/api v0.8.8 // indirect
