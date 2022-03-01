@@ -52,10 +52,12 @@ type BackupOverviewStorage struct {
 	convertor rest.TableConvertor
 }
 
-var _ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
-var _ rest.Scoper = &BackupOverviewStorage{}
-var _ rest.Getter = &BackupOverviewStorage{}
-var _ rest.Lister = &BackupOverviewStorage{}
+var (
+	_ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
+	_ rest.Scoper                   = &BackupOverviewStorage{}
+	_ rest.Getter                   = &BackupOverviewStorage{}
+	_ rest.Lister                   = &BackupOverviewStorage{}
+)
 
 func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *BackupOverviewStorage {
 	return &BackupOverviewStorage{
