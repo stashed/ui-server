@@ -28,7 +28,6 @@ import (
 	"stash.appscode.dev/apimachinery/apis/ui"
 	uiapi "stash.appscode.dev/apimachinery/apis/ui/v1alpha1"
 
-	"github.com/google/uuid"
 	"github.com/lnquy/cron"
 	rcron "github.com/robfig/cron/v3"
 	"gomodules.xyz/pointer"
@@ -37,7 +36,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -221,7 +219,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 	} else {
 		result.Spec.Status = uiapi.BackupStatusActive
 	}
-	result.UID = types.UID(uuid.Must(uuid.NewUUID()).String())
+	result.UID = "bkovw-" + cfg.GetUID()
 	result.SelfLink = ""
 	result.ManagedFields = nil
 	result.OwnerReferences = nil
