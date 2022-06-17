@@ -220,7 +220,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 		result.Spec.Status = uiapi.BackupStatusActive
 	}
 	result.UID = "bkovw-" + cfg.GetUID()
-	result.SelfLink = ""
+	// result.SelfLink = ""
 	result.ManagedFields = nil
 	result.OwnerReferences = nil
 	result.Finalizers = nil
