@@ -53,6 +53,7 @@ type BackupOverviewStorage struct {
 var (
 	_ rest.GroupVersionKindProvider = &BackupOverviewStorage{}
 	_ rest.Scoper                   = &BackupOverviewStorage{}
+	_ rest.Storage                  = &BackupOverviewStorage{}
 	_ rest.Getter                   = &BackupOverviewStorage{}
 	_ rest.Lister                   = &BackupOverviewStorage{}
 )
@@ -83,6 +84,8 @@ func (r *BackupOverviewStorage) NamespaceScoped() bool {
 func (r *BackupOverviewStorage) New() runtime.Object {
 	return &uiapi.BackupOverview{}
 }
+
+func (r *BackupOverviewStorage) Destroy() {}
 
 func (r *BackupOverviewStorage) NewList() runtime.Object {
 	return &uiapi.BackupOverviewList{}
