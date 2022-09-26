@@ -17,11 +17,11 @@ require (
 	k8s.io/client-go v0.25.1
 	k8s.io/klog/v2 v2.80.1
 	kmodules.xyz/authorizer v0.25.0
-	kmodules.xyz/client-go v0.25.0
+	kmodules.xyz/client-go v0.25.6
 	kmodules.xyz/custom-resources v0.25.0
 	kmodules.xyz/resource-metrics v0.25.0
 	sigs.k8s.io/controller-runtime v0.13.0
-	stash.appscode.dev/apimachinery v0.22.1-0.20220917042332-522f4e18711d
+	stash.appscode.dev/apimachinery v0.23.0
 )
 
 require (
@@ -110,7 +110,7 @@ require (
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	golang.org/x/sys v0.0.0-20220906135438-9e1f76180b77 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
@@ -133,7 +133,7 @@ require (
 	k8s.io/component-base v0.25.1 // indirect
 	k8s.io/component-helpers v0.25.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
+	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73 // indirect
 	kmodules.xyz/objectstore-api v0.25.0 // indirect
 	kmodules.xyz/offshoot-api v0.25.0 // indirect
 	kmodules.xyz/prober v0.25.0 // indirect
