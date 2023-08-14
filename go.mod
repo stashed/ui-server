@@ -21,10 +21,8 @@ require (
 	kmodules.xyz/custom-resources v0.25.2
 	kmodules.xyz/resource-metrics v0.25.2
 	sigs.k8s.io/controller-runtime v0.13.1
-	stash.appscode.dev/apimachinery v0.30.0
+	stash.appscode.dev/apimachinery v0.30.1-0.20230814025143-fcb8a9106d3c
 )
-
-require github.com/dustin/go-humanize v1.0.1-0.20220316001817-d5090ed65664 // indirect
 
 require (
 	cloud.google.com/go/compute v1.13.0 // indirect
