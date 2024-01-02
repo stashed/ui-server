@@ -43,6 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var (
@@ -125,19 +126,22 @@ func (c completedConfig) New(ctx context.Context) (*UIServer, error) {
 	}
 
 	// ctrl.SetLogger(...)
-	log.SetLogger(klogr.New())
+	log.SetLogger(klogr.New()) // nolint:staticcheck
 
 	mgr, err := manager.New(c.ExtraConfig.ClientConfig, manager.Options{
 		Scheme:                 Scheme,
-		MetricsBindAddress:     "",
-		Port:                   0,
+		Metrics:                metricsserver.Options{BindAddress: ""},
 		HealthProbeBindAddress: "",
 		LeaderElection:         false,
 		LeaderElectionID:       "5b87adeb.ui.stash.appscode.com",
-		ClientDisableCacheFor: []client.Object{
-			&core.Pod{},
+		NewClient:              cu.NewClient,
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&core.Pod{},
+				},
+			},
 		},
-		NewClient: cu.NewClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to start manager, reason: %v", err)
