@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	stashapi "stash.appscode.dev/apimachinery/apis/stash"
@@ -56,6 +57,7 @@ var (
 	_ rest.Storage                  = &BackupOverviewStorage{}
 	_ rest.Getter                   = &BackupOverviewStorage{}
 	_ rest.Lister                   = &BackupOverviewStorage{}
+	_ rest.SingularNameProvider     = &BackupOverviewStorage{}
 )
 
 func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *BackupOverviewStorage {
@@ -75,6 +77,10 @@ func NewBackupOverviewStorage(kc client.Client, a authorizer.Authorizer) *Backup
 
 func (r *BackupOverviewStorage) GroupVersionKind(_ schema.GroupVersion) schema.GroupVersionKind {
 	return uiapi.SchemeGroupVersion.WithKind(uiapi.ResourceKindBackupOverview)
+}
+
+func (r *BackupOverviewStorage) GetSingularName() string {
+	return strings.ToLower(uiapi.ResourceKindBackupOverview)
 }
 
 func (r *BackupOverviewStorage) NamespaceScoped() bool {

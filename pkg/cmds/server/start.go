@@ -93,6 +93,11 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 	// Fixes https://github.com/Azure/AKS/issues/522
 	clientcmd.Fix(serverConfig.ClientConfig)
 
+	ignorePrefixes := []string{
+		"/swaggerapi",
+		fmt.Sprintf("/apis/%s/%s", uiv1alpha1.SchemeGroupVersion, uiv1alpha1.ResourceBackupOverviews),
+	}
+
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		ou.GetDefinitions(
 			api.GetOpenAPIDefinitions,
@@ -101,10 +106,17 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 		openapi.NewDefinitionNamer(apiserver.Scheme))
 	serverConfig.OpenAPIConfig.Info.Title = "stash-ui-server"
 	serverConfig.OpenAPIConfig.Info.Version = v.Version.Version
-	serverConfig.OpenAPIConfig.IgnorePrefixes = []string{
-		"/swaggerapi",
-		fmt.Sprintf("/apis/%s/%s", uiv1alpha1.SchemeGroupVersion, uiv1alpha1.ResourceBackupOverviews),
-	}
+	serverConfig.OpenAPIConfig.IgnorePrefixes = ignorePrefixes
+
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
+		ou.GetDefinitions(
+			api.GetOpenAPIDefinitions,
+			uiv1alpha1.GetOpenAPIDefinitions,
+		),
+		openapi.NewDefinitionNamer(apiserver.Scheme))
+	serverConfig.OpenAPIV3Config.Info.Title = "stash-ui-server"
+	serverConfig.OpenAPIV3Config.Info.Version = v.Version.Version
+	serverConfig.OpenAPIV3Config.IgnorePrefixes = ignorePrefixes
 
 	if err := o.ExtraOptions.ApplyTo(serverConfig.ClientConfig); err != nil {
 		return nil, err
