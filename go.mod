@@ -23,7 +23,7 @@ require (
 	kmodules.xyz/custom-resources v0.29.1
 	kmodules.xyz/resource-metrics v0.29.1
 	sigs.k8s.io/controller-runtime v0.17.2
-	stash.appscode.dev/apimachinery v0.33.0
+	stash.appscode.dev/apimachinery v0.34.0
 )
 
 require (
@@ -67,7 +67,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.19.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20221118152302-e6195bd50e26 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
