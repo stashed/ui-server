@@ -23,7 +23,7 @@ require (
 	kmodules.xyz/custom-resources v0.30.0
 	kmodules.xyz/resource-metrics v0.30.5
 	sigs.k8s.io/controller-runtime v0.18.4
-	stash.appscode.dev/apimachinery v0.40.0
+	stash.appscode.dev/apimachinery v0.41.0
 )
 
 require (
