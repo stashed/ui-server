@@ -233,7 +233,7 @@ func (r *BackupOverviewStorage) getBackupOverview(ctx context.Context, cfg *stas
 	result.ManagedFields = nil
 	result.OwnerReferences = nil
 	result.Finalizers = nil
-	delete(result.ObjectMeta.Annotations, mu.LastAppliedConfigAnnotation)
+	delete(result.Annotations, mu.LastAppliedConfigAnnotation)
 
 	return result, nil
 }
