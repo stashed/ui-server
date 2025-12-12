@@ -29,7 +29,7 @@ const (
 	Timeout                  = 4 * time.Second
 )
 
-func GetDBVersion(obj map[string]interface{}) (string, error) {
+func GetDBVersion(obj map[string]any) (string, error) {
 	val, found, err := unstructured.NestedFieldCopy(obj, "spec", "version")
 	if err != nil {
 		return "", err
@@ -40,7 +40,7 @@ func GetDBVersion(obj map[string]interface{}) (string, error) {
 	return val.(string), nil
 }
 
-func GetDatabaseType(obj map[string]interface{}) (string, error) {
+func GetDatabaseType(obj map[string]any) (string, error) {
 	mode, err := resourcemetrics.Mode(obj)
 	if err != nil {
 		return "", err
@@ -48,7 +48,7 @@ func GetDatabaseType(obj map[string]interface{}) (string, error) {
 	return mode, nil
 }
 
-func GetDatabaseStatus(obj map[string]interface{}) (string, error) {
+func GetDatabaseStatus(obj map[string]any) (string, error) {
 	val, found, err := unstructured.NestedFieldCopy(obj, "status", "phase")
 	if err != nil {
 		return "", err
