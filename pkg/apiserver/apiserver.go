@@ -31,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -109,12 +108,6 @@ func (cfg *Config) Complete() CompletedConfig {
 		cfg.GenericConfig.Complete(),
 		&cfg.ExtraConfig,
 	}
-
-	c.GenericConfig.Version = &version.Info{
-		Major: "1",
-		Minor: "0",
-	}
-
 	return CompletedConfig{&c}
 }
 

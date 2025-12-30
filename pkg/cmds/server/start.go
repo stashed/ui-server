@@ -29,10 +29,9 @@ import (
 	v "gomodules.xyz/x/version"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/endpoints/openapi"
-	"k8s.io/apiserver/pkg/features"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-	"k8s.io/apiserver/pkg/util/feature"
+	basecompatibility "k8s.io/component-base/compatibility"
 	ou "kmodules.xyz/client-go/openapi"
 	"kmodules.xyz/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -52,7 +51,6 @@ type UIServerOptions struct {
 
 // NewUIServerOptions returns a new UIServerOptions
 func NewUIServerOptions(out, errOut io.Writer) *UIServerOptions {
-	_ = feature.DefaultMutableFeatureGate.Set(fmt.Sprintf("%s=false", features.APIPriorityAndFairness))
 	o := &UIServerOptions{
 		RecommendedOptions: genericoptions.NewRecommendedOptions(
 			defaultEtcdPathPrefix,
@@ -98,6 +96,8 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 		fmt.Sprintf("/apis/%s/%s", uiv1alpha1.SchemeGroupVersion, uiv1alpha1.ResourceBackupOverviews),
 	}
 
+	serverConfig.EffectiveVersion = basecompatibility.NewEffectiveVersionFromString("v1.0.0", "", "")
+
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		ou.GetDefinitions(
 			api.GetOpenAPIDefinitions,
@@ -142,12 +142,12 @@ func (o UIServerOptions) RunUIServer(ctx context.Context) error {
 	}
 
 	server.GenericAPIServer.AddPostStartHookOrDie("start-ui-server-informers", func(context genericapiserver.PostStartHookContext) error {
-		config.GenericConfig.SharedInformerFactory.Start(context.StopCh)
+		config.GenericConfig.SharedInformerFactory.Start(context.Done())
 		return nil
 	})
 
 	err = server.Manager.Add(manager.RunnableFunc(func(ctx context.Context) error {
-		return server.GenericAPIServer.PrepareRun().Run(ctx.Done())
+		return server.GenericAPIServer.PrepareRun().RunWithContext(ctx)
 	}))
 	if err != nil {
 		return err
