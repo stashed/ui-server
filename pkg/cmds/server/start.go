@@ -103,7 +103,8 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 			api.GetOpenAPIDefinitions,
 			uiv1alpha1.GetOpenAPIDefinitions,
 		),
-		openapi.NewDefinitionNamer(apiserver.Scheme))
+		openapi.NewDefinitionNamer(apiserver.Scheme),
+	)
 	serverConfig.OpenAPIConfig.Info.Title = "stash-ui-server"
 	serverConfig.OpenAPIConfig.Info.Version = v.Version.Version
 	serverConfig.OpenAPIConfig.IgnorePrefixes = ignorePrefixes
@@ -113,7 +114,8 @@ func (o *UIServerOptions) Config() (*apiserver.Config, error) {
 			api.GetOpenAPIDefinitions,
 			uiv1alpha1.GetOpenAPIDefinitions,
 		),
-		openapi.NewDefinitionNamer(apiserver.Scheme))
+		openapi.NewDefinitionNamer(apiserver.Scheme),
+	)
 	serverConfig.OpenAPIV3Config.Info.Title = "stash-ui-server"
 	serverConfig.OpenAPIV3Config.Info.Version = v.Version.Version
 	serverConfig.OpenAPIV3Config.IgnorePrefixes = ignorePrefixes
